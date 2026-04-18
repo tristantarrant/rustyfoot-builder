@@ -1,0 +1,26 @@
+plugin:
+  name: distrho-ports
+  version: master
+  source:
+    type: git
+    url: https://github.com/DISTRHO/DISTRHO-Ports.git
+  build:
+    - git submodule update --init --recursive
+    - meson setup build --buildtype release -Dplugins=vitalium -Dbuild-lv2=true -Dbuild-vst2=false -Dbuild-vst3=false -Dlinux-headless=true -Dbuild-juce60-only=true
+    - ninja -C build
+  install:
+    - cp -r build/ports-juce6.0/vitalium.lv2 ${LV2_DIR}/
+    - cp static-lv2-ttl/Vitalium-unfa.lv2/*.ttl ${LV2_DIR}/vitalium.lv2/
+    - ${PLUGIN_DIR}/merge-manifest.sh ${LV2_DIR}/vitalium.lv2
+  bundles:
+    - vitalium.lv2
+  modgui:
+    brand: Vital
+    color: darkblue
+    knob: silver
+  dependencies:
+    - libfftw3-dev
+    - libasound2-dev
+    - libfreetype-dev
+    - libgl-dev
+    - libx11-dev

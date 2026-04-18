@@ -1,6 +1,6 @@
 plugin:
   name: cardinal
-  version: 24.12
+  version: 26.02
   source:
     type: git
     url: https://github.com/DISTRHO/Cardinal.git

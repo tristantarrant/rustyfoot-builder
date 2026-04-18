@@ -6,6 +6,7 @@ plugin:
     url: https://github.com/jpcima/stone-phaser.git
   build:
     - make plugins BUILD_UI=false
+    - make gen
   install:
     - cp -r bin/*.lv2 ${LV2_DIR}
   bundles:
