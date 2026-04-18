@@ -15,6 +15,7 @@ plugin:
     - cp -r bin/Cardinal.lv2 ${LV2_DIR}/
     - cp -r bin/CardinalFX.lv2 ${LV2_DIR}/
     - cp -r bin/CardinalMini.lv2 ${LV2_DIR}/
+    - for b in Cardinal.lv2 CardinalFX.lv2 CardinalMini.lv2; do if [ -f ${LV2_DIR}/$b/modgui.ttl ] && ! grep -q 'modgui.ttl' ${LV2_DIR}/$b/manifest.ttl; then uri=$(grep -B1 'a lv2:Plugin' ${LV2_DIR}/$b/manifest.ttl | grep -oP '<[^>]+>' | grep -v 'lv2plug.in' | head -1); echo "$uri rdfs:seeAlso <modgui.ttl> ." >> ${LV2_DIR}/$b/manifest.ttl; fi; done
   bundles:
     - Cardinal.lv2
     - CardinalFX.lv2
