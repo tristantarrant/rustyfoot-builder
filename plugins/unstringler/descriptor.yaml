@@ -1,0 +1,18 @@
+plugin:
+  name: unstringler
+  version: main
+  source:
+    type: git
+    url: https://github.com/tristantarrant/unstringler.git
+  build:
+    - git submodule update --init --recursive
+    - make
+  install:
+    - cp -r bin/unstringler.lv2 ${LV2_DIR}/
+  bundles:
+    - unstringler.lv2
+  modgui:
+    brand: Dataforte
+    color: purple
+    knob: silver
+  dependencies: []
