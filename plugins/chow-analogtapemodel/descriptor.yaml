@@ -8,7 +8,7 @@ plugin:
     - git submodule update --init --recursive
     - cd Plugin
     - cmake -Bbuild -DCMAKE_BUILD_TYPE=Release
-    - cmake --build build --config Release --parallel
+    - cmake --build build --config Release -- -j2
     - cd ..
   install:
     - cp -r Plugin/build/CHOWTapeModel_artefacts/Release/LV2/CHOWTapeModel.lv2 ${LV2_DIR}/

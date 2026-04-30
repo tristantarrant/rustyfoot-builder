@@ -7,7 +7,7 @@ plugin:
   build:
     - git submodule update --init --recursive
     - cmake -Bbuild -DCMAKE_BUILD_TYPE=Release -DSKIP_LV2_TTL_GENERATOR=ON
-    - cmake --build build --config Release --parallel
+    - cmake --build build --config Release -- -j2
   install:
     - cp -r build/ChowCentaur/ChowCentaur_artefacts/Release/LV2/ChowCentaur.lv2 ${LV2_DIR}/
   bundles:
