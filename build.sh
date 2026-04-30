@@ -94,7 +94,12 @@ download() {
       if [ ! -d "$SOURCE_DIR" ]; then
         URL=$(yq eval '.plugin.source.url' "$1")
         pushd "$WORK_DIR/build" > /dev/null || return 1
-        git clone --branch "$VERSION" --depth 1 --recurse-submodules "$URL" "$NAME-$VERSION" || { popd > /dev/null; return 1; }
+        if [[ "$VERSION" =~ ^[0-9a-f]{40}$ ]]; then
+          git clone "$URL" "$NAME-$VERSION" || { popd > /dev/null; return 1; }
+          git -C "$NAME-$VERSION" checkout "$VERSION" || { popd > /dev/null; return 1; }
+        else
+          git clone --branch "$VERSION" --depth 1 --recurse-submodules "$URL" "$NAME-$VERSION" || { popd > /dev/null; return 1; }
+        fi
         popd > /dev/null
       fi
       ;;
