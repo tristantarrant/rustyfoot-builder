@@ -1,0 +1,26 @@
+plugin:
+  name: chow-analogtapemodel
+  version: 139ab8b5c2030d432ec258887f852a274582a862
+  source:
+    type: git
+    url: https://github.com/jatinchowdhury18/AnalogTapeModel.git
+  build:
+    - git submodule update --init --recursive
+    - cd Plugin
+    - cmake -Bbuild -DCMAKE_BUILD_TYPE=Release
+    - cmake --build build --config Release --parallel
+    - cd ..
+  install:
+    - cp -r Plugin/build/CHOWTapeModel_artefacts/Release/LV2/CHOWTapeModel.lv2 ${LV2_DIR}/
+  bundles:
+    - CHOWTapeModel.lv2
+  modgui:
+    brand: Chow DSP
+    color: orange
+    knob: silver
+  dependencies:
+    - libfreetype-dev
+    - libx11-dev
+    - libxrandr-dev
+    - libxinerama-dev
+    - libxcursor-dev

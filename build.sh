@@ -453,6 +453,57 @@ save_build_sha() {
   compute_build_sha > "$WORK_DIR/build/.stamp-$NAME"
 }
 
+check_remote_update() {
+  local url=$(yq eval '.plugin.source.url' "$1")
+
+  if [ "$SOURCE_TYPE" != "git" ]; then
+    printf "  %-30s skipped (not git)\n" "$NAME"
+    return
+  fi
+
+  local stamp_file="$WORK_DIR/build/.stamp-$NAME"
+  if [ ! -f "$stamp_file" ]; then
+    printf "  %-30s not built\n" "$NAME"
+    NOT_BUILT=$((NOT_BUILT + 1))
+    return
+  fi
+
+  local stamp=$(cat "$stamp_file")
+  local stored_sha=${stamp%%-*}
+  local stored_config=${stamp#*-}
+
+  local current_config=$(cat "$PLUGIN_DIR/descriptor.yaml" "$PLUGIN_DIR"/*.patch 2>/dev/null | sha1sum | cut -d' ' -f1)
+  local config_changed=false
+  [ "$current_config" != "$stored_config" ] && config_changed=true
+
+  local ls_output
+  ls_output=$(git ls-remote --refs "$url" "refs/heads/$VERSION" "refs/tags/$VERSION" 2>/dev/null)
+
+  if [ -z "$ls_output" ]; then
+    printf "  %-30s could not resolve version '%s'\n" "$NAME" "$VERSION"
+    return
+  fi
+
+  local remote_sha=$(echo "$ls_output" | head -1 | cut -f1)
+  local ref_type="branch"
+  echo "$ls_output" | grep -q "refs/tags/" && ref_type="tag"
+
+  local short_stored=${stored_sha:0:12}
+  local short_remote=${remote_sha:0:12}
+
+  if [ "$remote_sha" = "$stored_sha" ] && [ "$config_changed" = false ]; then
+    printf "  %-30s up to date (%s: %s @ %s)\n" "$NAME" "$ref_type" "$VERSION" "$short_stored"
+    UP_TO_DATE=$((UP_TO_DATE + 1))
+  elif [ "$remote_sha" != "$stored_sha" ]; then
+    printf "  %-30s UPDATE (%s: %s %s -> %s)\n" "$NAME" "$ref_type" "$VERSION" "$short_stored" "$short_remote"
+    UPDATES_AVAILABLE=$((UPDATES_AVAILABLE + 1))
+    [ "$config_changed" = true ] && printf "  %-30s   + config also changed\n" ""
+  else
+    printf "  %-30s config changed (upstream @ %s)\n" "$NAME" "$short_stored"
+    CONFIG_CHANGED=$((CONFIG_CHANGED + 1))
+  fi
+}
+
 ### Environment variables
 DIR=$(dirname "$0")
 RESOLVED_DIR=$(cd "$DIR" >/dev/null; pwd)
@@ -462,6 +513,7 @@ export PREFIX_DIR="$TARGET_DIR/usr"
 export LV2_DIR="$PREFIX_DIR/lib/lv2"
 export DATA_DIR="$RESOLVED_DIR/data"
 CLEAN=false
+CHECK_UPDATES=false
 
 while true
 do
@@ -470,12 +522,48 @@ do
       CLEAN=true
       shift
       ;;
+    --check-updates)
+      CHECK_UPDATES=true
+      shift
+      ;;
     *)
       break;;
   esac
 done
 
 setup
+
+if [ "$CHECK_UPDATES" = true ]; then
+  PLUGIN_LIST=("$@")
+  if [ ${#PLUGIN_LIST[@]} -eq 0 ]; then
+    PLUGIN_LIST=($(ls "$DIR/plugins/"))
+  fi
+
+  UPDATES_AVAILABLE=0
+  NOT_BUILT=0
+  UP_TO_DATE=0
+  CONFIG_CHANGED=0
+
+  echo "=== Checking for updates ==="
+  for PLUGIN in "${PLUGIN_LIST[@]}"; do
+    DESC="$DIR/plugins/$PLUGIN/descriptor.yaml"
+    if [ -f "$DESC" ]; then
+      parse "$DESC"
+      check_remote_update "$DESC"
+    else
+      printf "  %-30s no descriptor\n" "$PLUGIN"
+    fi
+  done
+
+  echo ""
+  echo "=== Summary ==="
+  echo "Updates available: $UPDATES_AVAILABLE"
+  echo "Config changed: $CONFIG_CHANGED"
+  echo "Up to date: $UP_TO_DATE"
+  echo "Not built: $NOT_BUILT"
+  exit 0
+fi
+
 FAILED_PLUGINS=()
 SUCCEEDED=0
 for PLUGIN in "$@"; do

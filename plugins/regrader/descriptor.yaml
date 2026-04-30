@@ -1,0 +1,14 @@
+plugin:
+  name: regrader
+  version: master
+  source:
+    type: git
+    url: https://github.com/linuxmao-org/regrader-port.git
+  build:
+    - git submodule update --init --recursive
+    - make HAVE_CAIRO=false MOD_BUILD=true WITH_LTO=true
+  install:
+    - cp -r bin/regrader.lv2 ${LV2_DIR}/
+  bundles:
+    - regrader.lv2
+  dependencies: []

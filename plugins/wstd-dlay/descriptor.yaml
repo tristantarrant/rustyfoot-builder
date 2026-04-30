@@ -1,0 +1,16 @@
+plugin:
+  name: wstd-dlay
+  version: main
+  source:
+    type: git
+    url: https://github.com/Wasted-Audio/wstd-dlay.git
+  build:
+    - git submodule update --init --recursive
+    - pip3 install --user git+https://github.com/Wasted-Audio/hvcc.git
+    - make build
+  install:
+    - cp -r bin/WSTD_DLAY.lv2 ${LV2_DIR}/
+  bundles:
+    - WSTD_DLAY.lv2
+  dependencies:
+    - python3-pip

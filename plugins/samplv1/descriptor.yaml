@@ -1,0 +1,23 @@
+plugin:
+  name: samplv1
+  version: master
+  source:
+    type: git
+    url: https://github.com/moddevices/samplv1.git
+  build:
+    - autoreconf -vif
+    - ./configure --disable-jack --disable-lv2-ui-x11 --disable-lv2-ui-external --enable-lv2-port-event=no --prefix=/usr
+    - make
+  install:
+    - make install DESTDIR=${WORK_DIR}/tmp-samplv1
+    - cp -r ${WORK_DIR}/tmp-samplv1/usr/lib/lv2/samplv1.lv2 ${LV2_DIR}/
+    - rm -rf ${WORK_DIR}/tmp-samplv1
+  bundles:
+    - samplv1.lv2
+  dependencies:
+    - qtbase5-dev
+    - qttools5-dev
+    - libsndfile1-dev
+    - autoconf
+    - automake
+    - libtool
