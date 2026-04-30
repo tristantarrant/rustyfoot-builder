@@ -6,8 +6,9 @@ plugin:
     url: https://github.com/Wasted-Audio/wstd-dlay.git
   build:
     - git submodule update --init --recursive
-    - pip3 install --user git+https://github.com/Wasted-Audio/hvcc.git
-    - make build
+    - python3 -m venv /tmp/hvcc-venv
+    - /tmp/hvcc-venv/bin/pip install git+https://github.com/Wasted-Audio/hvcc.git
+    - PATH="/tmp/hvcc-venv/bin:$PATH" make build
   install:
     - cp -r bin/WSTD_DLAY.lv2 ${LV2_DIR}/
   bundles:
