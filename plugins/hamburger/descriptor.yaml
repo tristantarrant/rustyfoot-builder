@@ -5,12 +5,10 @@ plugin:
     type: git
     url: https://github.com/Davit-G/Hamburger.git
   build:
-    - sed -i 's/COPY_PLUGIN_AFTER_BUILD TRUE/COPY_PLUGIN_AFTER_BUILD FALSE/' CMakeLists.txt
-    - rm -rf build
-    - cmake -Bbuild -DCMAKE_BUILD_TYPE=Release .
+    - cmake -Bbuild -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX_DIR} .
     - cmake --build build --config Release --parallel $(nproc)
   install:
-    - cp -rv build/Hamburger_artefacts/Release/LV2/Hamburger.lv2 ${LV2_DIR}/
+    - cp -rv ~/.lv2/Hamburger.lv2 ${LV2_DIR}/
   bundles:
     - Hamburger.lv2
   modgui:
