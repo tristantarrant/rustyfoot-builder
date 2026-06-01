@@ -1,0 +1,25 @@
+plugin:
+  name: hamburger
+  version: main
+  source:
+    type: git
+    url: https://github.com/Davit-G/Hamburger.git
+  build:
+    - cmake -Bbuild -DCMAKE_BUILD_TYPE=Release .
+    - cmake --build build --config Release --parallel $(nproc)
+  install:
+    - cp -rv build/Hamburger_artefacts/Release/LV2/Hamburger.lv2 ${LV2_DIR}/
+  bundles:
+    - Hamburger.lv2
+  modgui:
+    brand: Aviary Audio
+  dependencies:
+    - libfreetype-dev
+    - libx11-dev
+    - libxrandr-dev
+    - libxcursor-dev
+    - libxinerama-dev
+    - libasound2-dev
+    - libgl-dev
+    - libwebkit2gtk-4.1-dev
+    - libcurl4-openssl-dev
