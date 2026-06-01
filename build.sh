@@ -255,7 +255,7 @@ generate_modgui() {
 import re
 with open('$ttl_file') as f:
     content = f.read()
-ports = re.split(r'\] [,.]', content)
+ports = re.split(r'\]\s*[;,.]', content)
 results = []
 for port in ports:
     if 'ControlPort' in port and 'InputPort' in port:
@@ -486,6 +486,7 @@ generate_vst3_wrapper() {
     local lv2_bundle_dir="$LV2_DIR/${vst3_name}.lv2"
 
     echo "Scanning: $vst3_bundle"
+    rm -rf "$lv2_bundle_dir"
     mkdir -p "$lv2_bundle_dir"
 
     # Run scanner to generate wrapper.json
@@ -501,6 +502,9 @@ generate_vst3_wrapper() {
 
     local plugin_uri=$(python3 -c "import json; d=json.load(open('$wrapper_json')); print(d['uri'])")
     local plugin_name=$(python3 -c "import json; d=json.load(open('$wrapper_json')); print(d['name'])")
+    local plugin_maker=$(python3 -c "import json; d=json.load(open('$wrapper_json')); print(d.get('maker',''))")
+    local plugin_license=$(python3 -c "import json; d=json.load(open('$wrapper_json')); print(d.get('license',''))")
+    local plugin_category=$(python3 -c "import json; d=json.load(open('$wrapper_json')); print(d.get('category','lv2:Plugin'))")
     local audio_ins=$(python3 -c "import json; d=json.load(open('$wrapper_json')); print(d['audio_inputs'])")
     local audio_outs=$(python3 -c "import json; d=json.load(open('$wrapper_json')); print(d['audio_outputs'])")
 
@@ -526,6 +530,9 @@ with open('$wrapper_json') as f:
 
 uri = d['uri']
 name = d['name']
+maker = d.get('maker', '')
+license = d.get('license', '')
+category = d.get('category', 'lv2:Plugin')
 audio_ins = d['audio_inputs']
 audio_outs = d['audio_outputs']
 params = d['parameters']
@@ -540,8 +547,12 @@ lines.append('@prefix urid: <http://lv2plug.in/ns/ext/urid#> .')
 lines.append('@prefix units: <http://lv2plug.in/ns/extensions/units#> .')
 lines.append('')
 lines.append(f'<{uri}>')
-lines.append(f'    a lv2:Plugin , lv2:ReverbPlugin ;')
+lines.append(f'    a lv2:Plugin , {category} ;')
 lines.append(f'    doap:name \"{name}\" ;')
+if maker:
+    lines.append(f'    doap:developer [ doap:name \"{maker}\" ] ;')
+if license:
+    lines.append(f'    doap:license \"{license}\" ;')
 lines.append(f'    lv2:requiredFeature urid:map ;')
 lines.append(f'    lv2:extensionData state:interface ;')
 
