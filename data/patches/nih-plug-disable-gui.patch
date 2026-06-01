@@ -1,0 +1,14 @@
+diff --git a/Cargo.toml b/Cargo.toml
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -8,10 +8,6 @@
+
+ [dependencies]
+ nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = ["assert_process_allocs", "standalone"] }
+-nih_plug_egui = { git = "https://github.com/robbert-vdh/nih-plug.git" }
+-egui = "0.31"
+-egui_extras = { version = "0.31", features = ["image", "svg"] }
+-image = { version = "0.25", features = ["png"] }
+
+ [profile.release]
+ opt-level = 3

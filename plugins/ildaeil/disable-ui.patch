@@ -1,0 +1,33 @@
+--- a/plugins/FX/DistrhoPluginInfo.h
++++ b/plugins/FX/DistrhoPluginInfo.h
+@@ -31,7 +31,7 @@
+ #define DISTRHO_PLUGIN_LV2_CATEGORY    "lv2:UtilityPlugin"
+ #define DISTRHO_PLUGIN_VST3_CATEGORIES "Fx|Stereo"
+
+-#define DISTRHO_PLUGIN_HAS_UI             1
++#define DISTRHO_PLUGIN_HAS_UI             0
+ #define DISTRHO_PLUGIN_IS_SYNTH           0
+ #define DISTRHO_PLUGIN_NUM_INPUTS         2
+ #define DISTRHO_PLUGIN_NUM_OUTPUTS        2
+--- a/plugins/MIDI/DistrhoPluginInfo.h
++++ b/plugins/MIDI/DistrhoPluginInfo.h
+@@ -27,7 +27,7 @@
+ #define DISTRHO_PLUGIN_CLAP_FEATURES "note-effect"
+ #define DISTRHO_PLUGIN_LV2_CATEGORY  "lv2:MIDIPlugin"
+
+-#define DISTRHO_PLUGIN_HAS_UI             1
++#define DISTRHO_PLUGIN_HAS_UI             0
+ #define DISTRHO_PLUGIN_IS_SYNTH           0
+ #define DISTRHO_PLUGIN_NUM_INPUTS         0
+ #define DISTRHO_PLUGIN_NUM_OUTPUTS        0
+--- a/plugins/Synth/DistrhoPluginInfo.h
++++ b/plugins/Synth/DistrhoPluginInfo.h
+@@ -31,7 +31,7 @@
+ #define DISTRHO_PLUGIN_LV2_CATEGORY    "lv2:InstrumentPlugin"
+ #define DISTRHO_PLUGIN_VST3_CATEGORIES "Instrument|Stereo"
+
+-#define DISTRHO_PLUGIN_HAS_UI             1
++#define DISTRHO_PLUGIN_HAS_UI             0
+ #define DISTRHO_PLUGIN_IS_SYNTH           1
+ #define DISTRHO_PLUGIN_NUM_INPUTS         0
+ #define DISTRHO_PLUGIN_NUM_OUTPUTS        2

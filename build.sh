@@ -37,6 +37,7 @@ setup() {
 parse() {
   NAME=$(yq eval '.plugin.name' "$1")
   VERSION=$(yq eval '.plugin.version' "$1")
+  PLUGIN_TYPE=$(yq eval '.plugin.type // "lv2"' "$1")
   SOURCE_TYPE=$(yq eval '.plugin.source.type' "$1")
   BUILD_COMMANDS=$(yq ".plugin.build" "$1"| sed "s/^- //")
   INSTALL_COMMANDS=$(yq ".plugin.install" "$1"| sed "s/^- //")
@@ -112,10 +113,21 @@ download() {
 
 prepare() {
   echo "=== Patch: $NAME ==="
+  # Apply shared nih-plug GUI removal for VST3 plugins
+  if [ "$PLUGIN_TYPE" = "vst3" ] && [ -f "$RESOLVED_DIR/data/patches/nih-plug-disable-gui.patch" ]; then
+    echo "Applying nih-plug GUI disable patch"
+    patch -d "$SOURCE_DIR" -N -p1 -i "$RESOLVED_DIR/data/patches/nih-plug-disable-gui.patch" || true
+    # Remove mod gui and editor function from lib.rs
+    if [ -f "$SOURCE_DIR/src/lib.rs" ]; then
+      sed -i '/^mod gui;/d' "$SOURCE_DIR/src/lib.rs"
+      sed -i '/fn editor(.*AsyncExecutor/,/^    }/d' "$SOURCE_DIR/src/lib.rs"
+    fi
+  fi
+  # Apply per-plugin patches
   find "$PLUGIN_DIR" -name "*.patch" -type f -print -exec patch -d "$SOURCE_DIR" -N -p1 -i {} \;
   if [ -d "$PLUGIN_DIR/overlay" ]; then
      cp -rv "$PLUGIN_DIR"/overlay/* "$SOURCE_DIR"
-  fi 
+  fi
 }
 
 build() {
@@ -170,16 +182,37 @@ package() {
   BUILD_DATE=$(git -C "$SOURCE_DIR" log -1 --format=%cd --date=format:%Y%m%d 2>/dev/null || date +%Y%m%d)
   PACKAGE_DIR="$WORK_DIR/packages"
   mkdir -p "$PACKAGE_DIR"
-  for BUNDLE in $PLUGINS; do
-    BUNDLE_PATH="$LV2_DIR/$BUNDLE"
-    if [ ! -d "$BUNDLE_PATH" ]; then
-      echo "Warning: bundle $BUNDLE not found at $BUNDLE_PATH, skipping"
-      continue
-    fi
-    ARCHIVE_NAME="${BUNDLE%.lv2}-${VERSION}-${BUILD_DATE}-${MACHINE_ARCH}.tar.gz"
-    tar -czf "$PACKAGE_DIR/$ARCHIVE_NAME" -C "$LV2_DIR" "$BUNDLE"
+
+  if [ "$PLUGIN_TYPE" = "vst3" ]; then
+    # VST3 plugins: bundle both .vst3 and .lv2 wrapper into a single archive
+    local staging="$WORK_DIR/staging/$NAME"
+    rm -rf "$staging"
+    mkdir -p "$staging/lv2" "$staging/vst3"
+
+    for BUNDLE in $PLUGINS; do
+      local BUNDLE_PATH="$LV2_DIR/$BUNDLE"
+      [ -d "$BUNDLE_PATH" ] && cp -r "$BUNDLE_PATH" "$staging/lv2/"
+    done
+
+    # Include .vst3 bundles matching this plugin
+    find "$PREFIX_DIR" -maxdepth 3 -type d -name "${NAME}.vst3" -exec cp -r {} "$staging/vst3/" \;
+
+    ARCHIVE_NAME="${NAME}-${VERSION}-${BUILD_DATE}-${MACHINE_ARCH}.tar.gz"
+    tar -czf "$PACKAGE_DIR/$ARCHIVE_NAME" -C "$WORK_DIR/staging" "$NAME"
     echo "Packaged: $PACKAGE_DIR/$ARCHIVE_NAME"
-  done
+    rm -rf "$staging"
+  else
+    for BUNDLE in $PLUGINS; do
+      BUNDLE_PATH="$LV2_DIR/$BUNDLE"
+      if [ ! -d "$BUNDLE_PATH" ]; then
+        echo "Warning: bundle $BUNDLE not found at $BUNDLE_PATH, skipping"
+        continue
+      fi
+      ARCHIVE_NAME="${BUNDLE%.lv2}-${VERSION}-${BUILD_DATE}-${MACHINE_ARCH}.tar.gz"
+      tar -czf "$PACKAGE_DIR/$ARCHIVE_NAME" -C "$LV2_DIR" "$BUNDLE"
+      echo "Packaged: $PACKAGE_DIR/$ARCHIVE_NAME"
+    done
+  fi
 }
 
 BOX_COLORS=(black blue brown cream cyan darkblue dots flowerpower gold gray green lava orange petrol pink purple racing red slime tribal1 tribal2 warning white wood0 wood1 wood2 wood3 wood4 yellow zinc)
@@ -430,6 +463,157 @@ HTMLEOF
   done
 }
 
+generate_vst3_wrapper() {
+  echo "=== VST3 Wrapper: $NAME ==="
+
+  local VST3_SCAN="${VST3_SCAN:-rustyfoot-vst3-scan}"
+  if ! command -v "$VST3_SCAN" >/dev/null 2>&1; then
+    echo "Warning: $VST3_SCAN not found, skipping VST3 wrapper generation"
+    return 1
+  fi
+
+  local VST3_WRAPPER_SO="${VST3_WRAPPER_SO:-/usr/lib/rustyfoot/vst3-wrapper.so}"
+
+  # Find .vst3 bundles matching this plugin name
+  local vst3_bundles=$(find "$PREFIX_DIR" -maxdepth 3 -type d -name "${NAME}.vst3" 2>/dev/null)
+  if [ -z "$vst3_bundles" ]; then
+    echo "Warning: no .vst3 bundles found in $PREFIX_DIR"
+    return 1
+  fi
+
+  for vst3_bundle in $vst3_bundles; do
+    local vst3_name=$(basename "$vst3_bundle" .vst3)
+    local lv2_bundle_dir="$LV2_DIR/${vst3_name}.lv2"
+
+    echo "Scanning: $vst3_bundle"
+    mkdir -p "$lv2_bundle_dir"
+
+    # Run scanner to generate wrapper.json
+    if ! "$VST3_SCAN" "$vst3_bundle" "$lv2_bundle_dir" 2>&1; then
+      echo "FAILED: VST3 scan for $vst3_bundle"
+      rm -rf "$lv2_bundle_dir"
+      return 1
+    fi
+
+    # Read wrapper.json to get plugin metadata for TTL generation
+    local wrapper_json="$lv2_bundle_dir/wrapper.json"
+    [ ! -f "$wrapper_json" ] && { echo "FAILED: no wrapper.json generated"; return 1; }
+
+    local plugin_uri=$(python3 -c "import json; d=json.load(open('$wrapper_json')); print(d['uri'])")
+    local plugin_name=$(python3 -c "import json; d=json.load(open('$wrapper_json')); print(d['name'])")
+    local audio_ins=$(python3 -c "import json; d=json.load(open('$wrapper_json')); print(d['audio_inputs'])")
+    local audio_outs=$(python3 -c "import json; d=json.load(open('$wrapper_json')); print(d['audio_outputs'])")
+
+    echo "Generating TTL: $plugin_uri ($plugin_name)"
+
+    # Generate manifest.ttl
+    cat > "$lv2_bundle_dir/manifest.ttl" << TTLEOF
+@prefix lv2:  <http://lv2plug.in/ns/lv2core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<$plugin_uri>
+    a lv2:Plugin ;
+    lv2:binary <vst3-wrapper.so> ;
+    rdfs:seeAlso <${vst3_name}.ttl> , <modgui.ttl> .
+TTLEOF
+
+    # Generate plugin TTL with ports from wrapper.json
+    python3 -c "
+import json
+
+with open('$wrapper_json') as f:
+    d = json.load(f)
+
+uri = d['uri']
+name = d['name']
+audio_ins = d['audio_inputs']
+audio_outs = d['audio_outputs']
+params = d['parameters']
+
+lines = []
+lines.append('@prefix atom: <http://lv2plug.in/ns/ext/atom#> .')
+lines.append('@prefix doap: <http://usefulinc.com/ns/doap#> .')
+lines.append('@prefix lv2:  <http://lv2plug.in/ns/lv2core#> .')
+lines.append('@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .')
+lines.append('@prefix state: <http://lv2plug.in/ns/ext/state#> .')
+lines.append('@prefix urid: <http://lv2plug.in/ns/ext/urid#> .')
+lines.append('@prefix units: <http://lv2plug.in/ns/extensions/units#> .')
+lines.append('')
+lines.append(f'<{uri}>')
+lines.append(f'    a lv2:Plugin , lv2:ReverbPlugin ;')
+lines.append(f'    doap:name \"{name}\" ;')
+lines.append(f'    lv2:requiredFeature urid:map ;')
+lines.append(f'    lv2:extensionData state:interface ;')
+
+port_index = 0
+
+# Control input ports
+for p in params:
+    lines.append(f'    lv2:port [')
+    if p.get('toggle'):
+        lines.append(f'        a lv2:InputPort , lv2:ControlPort ;')
+        lines.append(f'        lv2:index {port_index} ;')
+        lines.append(f'        lv2:symbol \"{p[\"lv2_symbol\"]}\" ;')
+        lines.append(f'        lv2:name \"{p[\"lv2_name\"]}\" ;')
+        lines.append(f'        lv2:portProperty lv2:toggled ;')
+        lines.append(f'        lv2:default {p[\"default\"]:.6g} ;')
+        lines.append(f'        lv2:minimum {p[\"min\"]:.6g} ;')
+        lines.append(f'        lv2:maximum {p[\"max\"]:.6g} ;')
+    else:
+        lines.append(f'        a lv2:InputPort , lv2:ControlPort ;')
+        lines.append(f'        lv2:index {port_index} ;')
+        lines.append(f'        lv2:symbol \"{p[\"lv2_symbol\"]}\" ;')
+        lines.append(f'        lv2:name \"{p[\"lv2_name\"]}\" ;')
+        lines.append(f'        lv2:default {p[\"default\"]:.6g} ;')
+        lines.append(f'        lv2:minimum {p[\"min\"]:.6g} ;')
+        lines.append(f'        lv2:maximum {p[\"max\"]:.6g} ;')
+        if p.get('integer'):
+            lines.append(f'        lv2:portProperty lv2:integer ;')
+    if p.get('unit'):
+        u = p['unit'].strip()
+        unit_map = {
+            'dB': 'units:db', 'Hz': 'units:hz', 'ms': 'units:ms',
+            's': 'units:s', '%': 'units:pc', 'bpm': 'units:bpm',
+        }
+        if u in unit_map:
+            lines.append(f'        units:unit {unit_map[u]} ;')
+    lines.append(f'    ] ;')
+    port_index += 1
+
+# Audio input ports
+for i in range(audio_ins):
+    lines.append(f'    lv2:port [')
+    lines.append(f'        a lv2:InputPort , lv2:AudioPort ;')
+    lines.append(f'        lv2:index {port_index} ;')
+    lines.append(f'        lv2:symbol \"in{i + 1}\" ;')
+    lines.append(f'        lv2:name \"Audio Input {i + 1}\" ;')
+    lines.append(f'    ] ;')
+    port_index += 1
+
+# Audio output ports
+for i in range(audio_outs):
+    sep = '.' if i == audio_outs - 1 else ';'
+    lines.append(f'    lv2:port [')
+    lines.append(f'        a lv2:OutputPort , lv2:AudioPort ;')
+    lines.append(f'        lv2:index {port_index} ;')
+    lines.append(f'        lv2:symbol \"out{i + 1}\" ;')
+    lines.append(f'        lv2:name \"Audio Output {i + 1}\" ;')
+    lines.append(f'    ] {sep}')
+    port_index += 1
+
+print('\n'.join(lines))
+" > "$lv2_bundle_dir/${vst3_name}.ttl"
+
+    # Create symlink to shared wrapper binary
+    ln -sf "$VST3_WRAPPER_SO" "$lv2_bundle_dir/vst3-wrapper.so"
+
+    # Set PLUGINS so generate_modgui and package can find the bundle
+    PLUGINS="${vst3_name}.lv2"
+
+    echo "Generated: $lv2_bundle_dir"
+  done
+}
+
 clean() {
   rm -rf "$SOURCE_DIR"
   rm -f "$WORK_DIR/build/.stamp-$NAME"
@@ -600,6 +784,12 @@ for PLUGIN in "$@"; do
     if ! install "$DESC"; then
       FAILED_PLUGINS+=("$PLUGIN (install)")
       continue
+    fi
+    if [ "$PLUGIN_TYPE" = "vst3" ]; then
+      if ! generate_vst3_wrapper; then
+        FAILED_PLUGINS+=("$PLUGIN (vst3 wrapper)")
+        continue
+      fi
     fi
     generate_modgui
     package

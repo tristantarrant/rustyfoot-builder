@@ -1,0 +1,18 @@
+plugin:
+  name: ildaeil
+  version: main
+  source:
+    type: git
+    url: https://github.com/DISTRHO/Ildaeil.git
+  build:
+    - git submodule update --init --recursive
+    - make -j$(nproc)
+  install:
+    - cp -rv bin/Ildaeil-FX.lv2 ${LV2_DIR}/
+    - cp -rv bin/Ildaeil-MIDI.lv2 ${LV2_DIR}/
+    - cp -rv bin/Ildaeil-Synth.lv2 ${LV2_DIR}/
+  bundles:
+    - Ildaeil-FX.lv2
+    - Ildaeil-MIDI.lv2
+    - Ildaeil-Synth.lv2
+  dependencies: []
