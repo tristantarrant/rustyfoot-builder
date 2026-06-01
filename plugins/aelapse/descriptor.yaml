@@ -1,0 +1,24 @@
+plugin:
+  name: aelapse
+  version: main
+  source:
+    type: git
+    url: https://github.com/smiarx/aelapse.git
+  build:
+    - git submodule update --init --recursive
+    - cmake -Bbuild -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-DDSP_NO_DISPATCH" .
+    - cmake --build build --config Release --parallel $(nproc)
+  install:
+    - cp -rv build/Aelapse_artefacts/Release/LV2/Aelapse.lv2 ${LV2_DIR}/
+  bundles:
+    - Aelapse.lv2
+  modgui:
+    brand: S-audio
+  dependencies:
+    - libfreetype-dev
+    - libx11-dev
+    - libxrandr-dev
+    - libxcursor-dev
+    - libxinerama-dev
+    - libasound2-dev
+    - libgl-dev
