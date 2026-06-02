@@ -8,7 +8,7 @@ plugin:
     - git submodule update --init --recursive
     - python3 -m venv /tmp/hvcc-venv
     - /tmp/hvcc-venv/bin/pip install git+https://github.com/Wasted-Audio/hvcc.git
-    - PATH="/tmp/hvcc-venv/bin:$PATH" make build
+    - PATH="/tmp/hvcc-venv/bin:$PATH" HAVE_OPENGL=false HAVE_CAIRO=false HAVE_DGL=false make build
   install:
     - cp -r bin/WSTD_FL3NGR.lv2 ${LV2_DIR}/
   bundles:
