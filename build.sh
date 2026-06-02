@@ -47,6 +47,7 @@ parse() {
   MODGUI_BRAND=$(yq eval '.plugin.modgui.brand' "$1" 2>/dev/null)
   MODGUI_COLOR=$(yq eval '.plugin.modgui.color' "$1" 2>/dev/null)
   MODGUI_KNOB=$(yq eval '.plugin.modgui.knob' "$1" 2>/dev/null)
+  PLUGIN_DESCRIPTION=$(yq eval '.plugin.modgui.description // ""' "$1" 2>/dev/null)
   PLUGIN_DIR=$(pwd)/$(dirname "$1")
   SOURCE_DIR="$WORK_DIR/build/$NAME-$VERSION"
 }
@@ -463,6 +464,38 @@ HTMLEOF
   done
 }
 
+inject_description() {
+  [ -z "$PLUGIN_DESCRIPTION" ] || [ "$PLUGIN_DESCRIPTION" = "null" ] && return
+
+  for bundle in $PLUGINS; do
+    local bundle_dir="$LV2_DIR/$bundle"
+    [ -d "$bundle_dir" ] || continue
+
+    # Find plugin URI from manifest
+    local uri=$(grep -oP '<[^>]+>' "$bundle_dir/manifest.ttl" 2>/dev/null | grep -v 'lv2plug.in\|w3.org\|moddevices' | head -1 | tr -d '<>')
+    [ -z "$uri" ] && continue
+
+    # Find a TTL file to add the comment to (prefer modgui.ttl, fall back to main TTL)
+    local target_ttl=""
+    if [ -f "$bundle_dir/modgui.ttl" ]; then
+      target_ttl="$bundle_dir/modgui.ttl"
+    else
+      target_ttl=$(find "$bundle_dir" -name "*.ttl" ! -name "manifest.ttl" | head -1)
+    fi
+    [ -z "$target_ttl" ] && continue
+
+    # Skip if already has rdfs:comment
+    grep -q 'rdfs:comment' "$target_ttl" && continue
+
+    # Ensure rdfs prefix exists
+    grep -q '@prefix rdfs:' "$target_ttl" || sed -i '1i @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .' "$target_ttl"
+
+    echo "" >> "$target_ttl"
+    echo "<$uri> rdfs:comment \"$PLUGIN_DESCRIPTION\" ." >> "$target_ttl"
+    echo "DESCRIPTION: $bundle ($PLUGIN_DESCRIPTION)"
+  done
+}
+
 generate_vst3_wrapper() {
   echo "=== VST3 Wrapper: $NAME ==="
 
@@ -522,7 +555,7 @@ generate_vst3_wrapper() {
 TTLEOF
 
     # Generate plugin TTL with ports from wrapper.json
-    python3 -c "
+    PLUGIN_DESCRIPTION="$PLUGIN_DESCRIPTION" python3 -c "
 import json
 
 with open('$wrapper_json') as f:
@@ -553,6 +586,10 @@ if maker:
     lines.append(f'    doap:developer [ doap:name \"{maker}\" ] ;')
 if license:
     lines.append(f'    doap:license \"{license}\" ;')
+import os
+description = os.environ.get('PLUGIN_DESCRIPTION', '')
+if description:
+    lines.append(f'    rdfs:comment \"{description}\" ;')
 lines.append(f'    lv2:requiredFeature urid:map ;')
 lines.append(f'    lv2:extensionData state:interface ;')
 
@@ -803,6 +840,7 @@ for PLUGIN in "$@"; do
       fi
     fi
     generate_modgui
+    inject_description
     package
     save_build_sha
     SUCCEEDED=$((SUCCEEDED + 1))

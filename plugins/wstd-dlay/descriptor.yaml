@@ -15,3 +15,5 @@ plugin:
     - WSTD_DLAY.lv2
   dependencies:
     - python3-pip
+  modgui:
+    description: "Simple nasty delay plugin"

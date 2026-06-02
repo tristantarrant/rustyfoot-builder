@@ -17,4 +17,5 @@ plugin:
     - fuzzb.lv2
   modgui:
     brand: YimRakhee
+    description: "A destructive, synth-like bass fuzz plugin"
   dependencies: []

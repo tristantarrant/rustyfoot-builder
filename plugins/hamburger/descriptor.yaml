@@ -13,6 +13,7 @@ plugin:
     - Hamburger.lv2
   modgui:
     brand: Aviary Audio
+    description: "Distortion plugin with inbuilt dynamics controls and equalisation"
   dependencies:
     - libfreetype-dev
     - libx11-dev

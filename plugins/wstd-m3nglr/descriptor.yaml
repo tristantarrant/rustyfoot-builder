@@ -15,6 +15,7 @@ plugin:
     - WSTD_M3NGLR.lv2
   modgui:
     brand: Wasted Audio
+    description: "Multi-band modular nasty distortion plugin"
   dependencies:
     - python3-pip
     - python3-venv

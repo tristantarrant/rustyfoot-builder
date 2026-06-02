@@ -17,4 +17,5 @@ plugin:
     - letsdist.lv2
   modgui:
     brand: YimRakhee
+    description: "Aggressive distortion plugin for guitar"
   dependencies: []

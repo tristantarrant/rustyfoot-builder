@@ -15,6 +15,7 @@ plugin:
     - WSTD_3Q.lv2
   modgui:
     brand: Wasted Audio
+    description: "EQ plugin with separate outputs for each stage"
   dependencies:
     - python3-pip
     - python3-venv

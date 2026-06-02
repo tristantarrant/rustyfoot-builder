@@ -17,4 +17,5 @@ plugin:
     - ampb.lv2
   modgui:
     brand: YimRakhee
+    description: "Bass preamplifier plugin"
   dependencies: []

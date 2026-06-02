@@ -17,4 +17,5 @@ plugin:
     - crushfuzz.lv2
   modgui:
     brand: YimRakhee
+    description: "Bitcrusher plugin for guitar"
   dependencies: []

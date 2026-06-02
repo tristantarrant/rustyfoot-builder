@@ -17,4 +17,5 @@ plugin:
     - ampg.lv2
   modgui:
     brand: YimRakhee
+    description: "Guitar amplifier plugin"
   dependencies: []

@@ -1,0 +1,21 @@
+plugin:
+  name: surge
+  version: release_xt_1.3.4
+  source:
+    type: git
+    url: https://github.com/surge-synthesizer/surge.git
+  build:
+    - git submodule update --init --recursive
+    - cmake -Bbuild -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DSURGE_BUILD_LV2=TRUE -DSURGE_SKIP_VST3=TRUE -DSURGE_BUILD_CLAP=FALSE -DSURGE_SKIP_STANDALONE=TRUE -DSURGE_BUILD_TESTRUNNER=OFF -DSURGE_SKIP_LUA=TRUE -DSURGE_SKIP_WERROR=TRUE
+    - cmake --build build --config Release --target surge-xt_LV2 surge-fx_LV2 --parallel
+  install:
+    - cp -r "build/src/surge-xt/surge-xt_artefacts/Release/LV2/Surge XT.lv2" ${LV2_DIR}/
+    - cp -r "build/src/surge-fx/surge-fx_artefacts/Release/LV2/Surge XT Effects.lv2" ${LV2_DIR}/
+  bundles:
+    - Surge XT.lv2
+    - Surge XT Effects.lv2
+  modgui:
+    brand: Surge Synth Team
+    color: cyan
+    knob: silver
+  dependencies: []

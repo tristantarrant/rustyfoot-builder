@@ -17,4 +17,5 @@ plugin:
     - tuneb.lv2
   modgui:
     brand: YimRakhee
+    description: "Tuner plugin optimized for bass guitars"
   dependencies: []

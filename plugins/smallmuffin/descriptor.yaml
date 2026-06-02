@@ -17,4 +17,5 @@ plugin:
     - smallmuffin.lv2
   modgui:
     brand: YimRakhee
+    description: "Vintage fuzz plugin for guitar and bass"
   dependencies: []

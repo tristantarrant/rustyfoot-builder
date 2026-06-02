@@ -17,4 +17,5 @@ plugin:
     - distb.lv2
   modgui:
     brand: YimRakhee
+    description: "A modern, aggressive bass distortion plugin"
   dependencies: []

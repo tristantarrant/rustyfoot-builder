@@ -14,6 +14,7 @@ plugin:
     - Aelapse.lv2
   modgui:
     brand: S-audio
+    description: "Delay and reverb plugin with tape-delay and spring reverb emulation"
   dependencies:
     - libfreetype-dev
     - libx11-dev

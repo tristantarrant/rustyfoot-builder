@@ -17,4 +17,5 @@ plugin:
     - suboctb.lv2
   modgui:
     brand: YimRakhee
+    description: "Analog-style bass sub-octave synthesizer plugin"
   dependencies: []

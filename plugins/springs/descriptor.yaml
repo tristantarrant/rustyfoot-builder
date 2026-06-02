@@ -17,4 +17,5 @@ plugin:
     - springs.lv2
   modgui:
     brand: YimRakhee
+    description: "A classic, chirpy spring reverb plugin"
   dependencies: []
