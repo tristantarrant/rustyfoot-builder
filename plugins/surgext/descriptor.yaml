@@ -6,16 +6,16 @@ plugin:
     url: https://github.com/surge-synthesizer/surge.git
   build:
     - git submodule update --init --recursive
-    - cmake -Bbuild -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DSURGE_BUILD_LV2=TRUE -DSURGE_SKIP_VST3=TRUE -DSURGE_BUILD_CLAP=FALSE -DSURGE_SKIP_STANDALONE=TRUE -DSURGE_BUILD_TESTRUNNER=OFF -DSURGE_SKIP_LUA=TRUE -DSURGE_SKIP_WERROR=TRUE
-    - cmake --build build --config Release --target surge-xt_LV2 surge-fx_LV2 --parallel
+    - cmake -Bbuild -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DSURGE_BUILD_LV2=TRUE -DSURGE_SKIP_VST3=TRUE -DSURGE_BUILD_CLAP=FALSE -DSURGE_SKIP_STANDALONE=TRUE -DSURGE_BUILD_TESTRUNNER=OFF -DSURGE_SKIP_LUA=TRUE -DSURGE_SKIP_WERROR=TRUE -DSURGE_EXPOSE_PRESETS=ON
+    - cmake --build build --config Release --target surge-xt_LV2 surge-fx_LV2 --parallel 2
   install:
     - cp -r "build/src/surge-xt/surge-xt_artefacts/Release/LV2/Surge XT.lv2" ${LV2_DIR}/
     - cp -r "build/src/surge-fx/surge-fx_artefacts/Release/LV2/Surge XT Effects.lv2" ${LV2_DIR}/
+    - rsync -r resources/data/ ${PREFIX_DIR}/share/surge-xt/
   bundles:
     - Surge XT.lv2
     - Surge XT Effects.lv2
   modgui:
     brand: Surge Synth Team
     color: cyan
-    knob: silver
   dependencies: []

@@ -1,0 +1,19 @@
+plugin:
+  name: sirial
+  version: master
+  source:
+    type: git
+    url: https://github.com/tiagolr/sirial.git
+  build:
+    - git submodule update --init --recursive
+    - cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -S . -B ./build
+    - cmake --build ./build --config Release --target Sirial_LV2
+  install:
+    - cp -r build/Sirial_artefacts/Release/LV2/Sirial.lv2 ${LV2_DIR}/
+  bundles:
+    - Sirial.lv2
+  modgui:
+    brand: tiagolr
+    description: "Rhythmic serial delay with 16 taps, ping-pong, modulation, and ducking"
+    color: blue
+  dependencies: []

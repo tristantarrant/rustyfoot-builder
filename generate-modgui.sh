@@ -144,6 +144,9 @@ for bundle_dir in "$LV2_DIR"/Airwindows-*.lv2; do
     # Copy pedal background image
     if [ -f "$SDK_DIR/html/resources/pedals/$model/$box_color.png" ]; then
         cp "$SDK_DIR/html/resources/pedals/$model/$box_color.png" "$bundle_dir/modgui/pedals/$model/"
+        # Footswitch-only pedals use boxy-small variant
+        mkdir -p "$bundle_dir/modgui/pedals/$model-small"
+        cp "$SDK_DIR/html/resources/pedals/$model/$box_color.png" "$bundle_dir/modgui/pedals/$model-small/"
     fi
 
     # Copy footswitch
@@ -179,6 +182,11 @@ for bundle_dir in "$LV2_DIR"/Airwindows-*.lv2; do
             <div class="mod-pedal-input-image"></div>
         </div>
         {{/effect.ports.audio.input}}
+        {{#effect.ports.midi.input}}
+        <div class="mod-input mod-input-disconnected" title="{{name}}" mod-role="input-midi-port" mod-port-symbol="{{symbol}}">
+            <div class="mod-pedal-input-image"></div>
+        </div>
+        {{/effect.ports.midi.input}}
     </div>
     <div class="mod-pedal-output">
         {{#effect.ports.audio.output}}
@@ -186,6 +194,11 @@ for bundle_dir in "$LV2_DIR"/Airwindows-*.lv2; do
             <div class="mod-pedal-output-image"></div>
         </div>
         {{/effect.ports.audio.output}}
+        {{#effect.ports.midi.output}}
+        <div class="mod-output mod-output-disconnected" title="{{name}}" mod-role="output-midi-port" mod-port-symbol="{{symbol}}">
+            <div class="mod-pedal-output-image"></div>
+        </div>
+        {{/effect.ports.midi.output}}
     </div>
 </div>
 HTMLEOF
@@ -212,6 +225,11 @@ HTMLEOF
             <div class="mod-pedal-input-image"></div>
         </div>
         {{/effect.ports.audio.input}}
+        {{#effect.ports.midi.input}}
+        <div class="mod-input mod-input-disconnected" title="{{name}}" mod-role="input-midi-port" mod-port-symbol="{{symbol}}">
+            <div class="mod-pedal-input-image"></div>
+        </div>
+        {{/effect.ports.midi.input}}
     </div>
     <div class="mod-pedal-output">
         {{#effect.ports.audio.output}}
@@ -219,6 +237,11 @@ HTMLEOF
             <div class="mod-pedal-output-image"></div>
         </div>
         {{/effect.ports.audio.output}}
+        {{#effect.ports.midi.output}}
+        <div class="mod-output mod-output-disconnected" title="{{name}}" mod-role="output-midi-port" mod-port-symbol="{{symbol}}">
+            <div class="mod-pedal-output-image"></div>
+        </div>
+        {{/effect.ports.midi.output}}
     </div>
 </div>
 HTMLEOF

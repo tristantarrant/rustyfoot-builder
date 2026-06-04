@@ -1,0 +1,40 @@
+plugin:
+  name: iem-plugin-suite
+  version: master
+  source:
+    type: git
+    url: https://git.iem.at/audioplugins/IEMPluginSuite.git
+  build:
+    - git submodule update --init --recursive
+    - cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DIEM_BUILD_LV2=ON -DIEM_BUILD_STANDALONE=OFF -DIEM_BUILD_VST3=OFF
+    - cmake --build build --config Release --parallel 2
+  install:
+    - find build -path '*/Release/LV2/*.lv2' -type d -exec cp -r {} ${LV2_DIR}/ \;
+  bundles:
+    - AllRADecoder.lv2
+    - BinauralDecoder.lv2
+    - CoordinateConverter.lv2
+    - DirectionalCompressor.lv2
+    - DirectivityShaper.lv2
+    - DistanceCompensator.lv2
+    - DualDelay.lv2
+    - EnergyVisualizer.lv2
+    - FdnReverb.lv2
+    - GranularEncoder.lv2
+    - MatrixMultiplier.lv2
+    - MultiBandCompressor.lv2
+    - MultiEncoder.lv2
+    - MultiEQ.lv2
+    - OmniCompressor.lv2
+    - ProbeDecoder.lv2
+    - RoomEncoder.lv2
+    - SceneRotator.lv2
+    - SimpleDecoder.lv2
+    - StereoEncoder.lv2
+    - ToolBox.lv2
+  modgui:
+    brand: IEM
+    description: "Ambisonic plugin suite up to 7th order - encoders, decoders, reverb, dynamics, and more"
+    color: darkblue
+  dependencies:
+    - libfftw3-dev

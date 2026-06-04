@@ -1,0 +1,20 @@
+plugin:
+  name: guitarmidi
+  version: master
+  source:
+    type: git
+    url: https://github.com/geraldmwangi/GuitarMidi-LV2.git
+  build:
+    - git submodule update --init
+    - cmake -S . -B bin -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX_DIR}
+    - cmake --build bin
+  install:
+    - cmake --install bin --prefix=${LV2_DIR}
+  bundles:
+    - guitarmidi.lv2
+  modgui:
+    brand: GuitarMidi
+    description: "Real-time polyphonic guitar-to-MIDI converter using neural network pitch detection"
+    color: purple
+  dependencies:
+    - ninja-build
