@@ -1,0 +1,50 @@
+plugin:
+  name: gearmulator
+  version: "2.2.6"
+  source:
+    type: git
+    url: https://github.com/dsp56300/gearmulator.git
+  build:
+    - git submodule update --init --recursive
+    - cmake -Bbuild -DCMAKE_BUILD_TYPE=Release
+        -Dgearmulator_BUILD_JUCEPLUGIN=ON
+        -Dgearmulator_BUILD_JUCEPLUGIN_LV2=ON
+        -Dgearmulator_BUILD_JUCEPLUGIN_VST2=OFF
+        -Dgearmulator_BUILD_JUCEPLUGIN_VST3=OFF
+        -Dgearmulator_BUILD_JUCEPLUGIN_CLAP=OFF
+        -Dgearmulator_BUILD_JUCEPLUGIN_AU=OFF
+        -Dgearmulator_BUILD_JUCEPLUGIN_Standalone=OFF
+        -Dgearmulator_BUILD_FX_PLUGIN=OFF
+        -Dgearmulator_SYNTH_OSIRUS=ON
+        -Dgearmulator_SYNTH_OSTIRUS=ON
+        -Dgearmulator_SYNTH_VAVRA=ON
+        -Dgearmulator_SYNTH_XENIA=ON
+        -Dgearmulator_SYNTH_NODALRED2X=ON
+        -Dgearmulator_SYNTH_JE8086=ON
+    - cmake --build build --config Release -- -j2
+  install:
+    - for bundle in Osirus OsTIrus Vavra Xenia NodalRed2x JE8086; do
+        find build -type d -name "${bundle}.lv2" -exec cp -r {} ${LV2_DIR}/ \; ;
+      done
+  bundles:
+    - Osirus.lv2
+    - OsTIrus.lv2
+    - Vavra.lv2
+    - Xenia.lv2
+    - NodalRed2x.lv2
+    - JE8086.lv2
+  modgui:
+    brand: The Usual Suspects
+    color: purple
+    knob: silver
+  dependencies:
+    - libfreetype-dev
+    - libx11-dev
+    - libxrandr-dev
+    - libxinerama-dev
+    - libxcursor-dev
+    - mesa-common-dev
+    - libasound2-dev
+    - freeglut3-dev
+    - libxcomposite-dev
+    - pkg-config

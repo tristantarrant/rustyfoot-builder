@@ -752,6 +752,8 @@ export DATA_DIR="$RESOLVED_DIR/data"
 CLEAN=false
 CHECK_UPDATES=false
 
+INTERACTIVE=false
+
 while true
 do
   case "$1" in
@@ -763,12 +765,28 @@ do
       CHECK_UPDATES=true
       shift
       ;;
+    --interactive|-i)
+      INTERACTIVE=true
+      shift
+      ;;
     *)
       break;;
   esac
 done
 
 setup
+
+if [ "$INTERACTIVE" = true ]; then
+  ENTRIES=()
+  for d in "$DIR"/plugins/*/descriptor.yaml; do
+    name=$(basename "$(dirname "$d")")
+    ENTRIES+=("$name" "" OFF)
+  done
+  SELECTED=$(whiptail --title "Select plugins to build" \
+    --checklist "Use space to select, enter to confirm:" \
+    20 60 12 "${ENTRIES[@]}" 3>&1 1>&2 2>&3) || exit 0
+  eval set -- $SELECTED
+fi
 
 if [ "$CHECK_UPDATES" = true ]; then
   PLUGIN_LIST=("$@")
