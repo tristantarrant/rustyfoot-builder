@@ -5,6 +5,8 @@ plugin:
     type: git
     url: https://github.com/brummer10/Ratatouille.lv2.git
   build:
+    - git submodule update --init --recursive
+    - git -C NeuralAmpModelerCore checkout v0.5.3
     - make mod
   install:
     - make install INSTALL_DIR=${LV2_DIR}
