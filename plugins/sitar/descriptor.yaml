@@ -1,0 +1,14 @@
+plugin:
+  name: sitar
+  version: main
+  source:
+    type: git
+    url: https://github.com/stefdoerr/sitar.git
+  build:
+    - git submodule update --init --recursive
+    - make HAVE_CAIRO=false HAVE_DGL=false HAVE_OPENGL=false
+  install:
+    - cp -r bin/sitar.lv2 ${LV2_DIR}/
+  bundles:
+    - sitar.lv2
+  dependencies: []
